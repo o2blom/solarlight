@@ -2,6 +2,9 @@ import time
 import board
 import analogio
 import neopixel
+from analogio import AnalogIn
+
+analog_in = AnalogIn(board.A0)
 
 # Full direct light results in values around 128. Near darkness ~4000
 LIGHT_THRESHOLD = 10000 #A higher value means it requires more darkness to turn on
@@ -60,11 +63,17 @@ state = DAY  # Assume day (Lights off)
 
 i = 0  # Negative -30 means its day time. Plus 30 means night
 
+def get_voltage(pin):  # 2.39 = 4.94V
+    return (pin.value * 3.3) / 65536
+
 while True:
 
     time.sleep(1)
 
 #    print("Value: %d", lsense.value)
+
+#    print("Voltage Reading: %d", get_voltage(analog_in))
+
 
     # Read ADC Photoresistor value and run some hysteresis to avoid glitching
     if lsense.value < LIGHT_THRESHOLD:
@@ -74,7 +83,7 @@ while True:
         if i < 30:
             i = i + 1
 
-    if state == DAY and i == 30:
+    if state == DAY and i == 30 and get_voltage(analog_in) > 2.0:
         print("Night Detected - Switching Lights on for 6h")
         state = NIGHT
         pixels.fill(YELLOW)
